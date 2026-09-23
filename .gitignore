@@ -1,0 +1,26 @@
+node_modules
+.next
+next-env.d.ts
+*.tsbuildinfo
+
+# Configuración local de Vercel CLI (vincula el proyecto a tu cuenta)
+.vercel
+
+# Secretos y variables de entorno: SOLO se versiona .env.example
+.env
+.env.local
+.env*.local
+.env.production
+.env.development
+
+# Cualquier credencial o llave que termine aquí por accidente
+*.pem
+*.key
+*.p12
+*.cer
+*credentials*.json
+*service-account*.json
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db

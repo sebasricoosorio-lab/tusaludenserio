@@ -1,0 +1,261 @@
+'use client';
+// Portal del Paciente — interfaz conectada al backend real.
+// Flujo: sesión → consentimiento → perfil → portal. Todos los datos vienen de /api/*
+// (Supabase con RLS); aquí no hay datos de ejemplo ni simulaciones.
+
+import { useCallback, useEffect, useState } from 'react';
+import { api, ApiFail, mensajeDeError, type Row } from '@/lib/client-api';
+import { ENTITY_KEYS, ENSERIO_URL, INSTITUCIONES, PATIENT_FIELDS, fechaCorta } from '@/lib/fields';
+import { AuthScreen, ConsentGate, ProfileGate } from '@/components/Gates';
+import EntityList from '@/components/EntityList';
+import EntityForm, { toInputValue } from '@/components/EntityForm';
+import Tile from '@/components/Tile';
+import {
+  IconArrow, IconAsistente, IconCitas, IconDerechos, IconEspecialidad,
+  IconInstituciones, IconLabs, IconMeds, IconPersonal, IconTratamientos,
+} from '@/components/icons';
+
+type Phase = 'loading' | 'auth' | 'consent' | 'profile' | 'portal';
+function edad(birth?: string | null) {
+  if (!birth) return null;
+  const [y, m, d] = birth.split('-').map(Number);
+  const hoy = new Date();
+  let a = hoy.getFullYear() - y;
+  if (hoy.getMonth() + 1 < m || (hoy.getMonth() + 1 === m && hoy.getDate() < d)) a--;
+  return a;
+}
+
+export default function PortalApp() {
+  const [phase, setPhase] = useState<Phase>('loading');
+  const [consent, setConsent] = useState<Row | null>(null);
+  const [patient, setPatient] = useState<Row | null>(null);
+  const [data, setData] = useState<Record<string, Row[]>>({});
+  const [open, setOpen] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [bookingFor, setBookingFor] = useState<string | null>(null);
+
+  const toast = useCallback((msg: string) => {
+    setNotice(msg);
+    window.setTimeout(() => setNotice(null), 4500);
+  }, []);
+
+  const loadAll = useCallback(async () => {
+    const results = await Promise.all(ENTITY_KEYS.map((k) => api<Row[]>('GET', `/api/${k}`)));
+    const next: Record<string, Row[]> = {};
+    ENTITY_KEYS.forEach((k, i) => (next[k] = results[i]));
+    setData(next);
+  }, []);
+
+  const refresh = useCallback(async (entity: string) => {
+    try {
+      const rows = await api<Row[]>('GET', `/api/${entity}`);
+      setData((d) => ({ ...d, [entity]: rows }));
+    } catch (e) {
+      toast(mensajeDeError(e));
+    }
+  }, [toast]);
+
+  // Decide en qué pantalla estamos según lo que responde el servidor.
+  const bootstrap = useCallback(async () => {
+    try {
+      const c = await api<Row>('GET', '/api/consents');
+      setConsent(c);
+      if (!c.hasActiveConsent) return setPhase('consent');
+      const p = await api<Row | null>('GET', '/api/patient');
+      setPatient(p);
+      if (!p) return setPhase('profile');
+      await loadAll();
+      setPhase('portal');
+    } catch (e) {
+      if (!(e instanceof ApiFail && e.status === 401)) toast(mensajeDeError(e));
+      setPhase('auth');
+    }
+  }, [loadAll, toast]);
+
+  useEffect(() => {
+    bootstrap();
+  }, [bootstrap]);
+
+  async function salir() {
+    try { await api('POST', '/api/auth/logout'); } catch { /* aun así se limpia la pantalla */ }
+    setPatient(null);
+    setData({});
+    setOpen(null);
+    setPhase('auth');
+  }
+
+  async function solicitarEliminacion() {
+    if (!window.confirm('Se registrará tu solicitud de eliminación de datos. Un responsable verificará tu identidad y te responderá. ¿Continuar?')) return;
+    try {
+      const r = await api<Row>('POST', '/api/deletion-request', {});
+      toast(r.message ?? 'Solicitud registrada.');
+    } catch (e) {
+      toast(mensajeDeError(e));
+    }
+  }
+
+  const toggle = (id: string) => setOpen((o) => (o === id ? null : id));
+
+  // ------------------------------------------------------------ pantallas previas
+  if (phase === 'loading') return <main className="gate"><p aria-live="polite">Cargando…</p></main>;
+  if (phase === 'auth') return <><AuthScreen onLoggedIn={bootstrap} />{notice && <div className="card toast" role="status">{notice}</div>}</>;
+  if (phase === 'consent' && consent) return <ConsentGate consent={consent} onAccepted={bootstrap} onLogout={salir} />;
+  if (phase === 'profile') return <ProfileGate onCreated={bootstrap} onLogout={salir} />;
+  if (!patient) return null;
+
+  // --------------------------------------------------------------------- portal
+  const rows = (k: string) => data[k] ?? [];
+  const proxima = rows('appointments')[0];
+  const espPreview = rows('specialties').length
+    ? rows('specialties').slice(0, 2).map((s) => s.specialty_name).join(', ') + (rows('specialties').length > 2 ? ` +${rows('specialties').length - 2}` : '')
+    : 'Sin registros todavía';
+  const a = edad(patient.birth_date);
+
+  return (
+    <>
+      <nav className="navbar" aria-label="Navegación principal">
+        <span className="card serif nav-brand">portal</span>
+        <div className="card nav-links">
+          <a href="#portal">Mi historia</a>
+          <a href="#tile-citas">Citas</a>
+          <a href="#tile-derechos">Mis derechos</a>
+        </div>
+        <div className="nav-right">
+          <a className="btn btn-sm" href={ENSERIO_URL} target="_blank" rel="noopener noreferrer">EnSERIO <IconArrow /></a>
+          <button className="btn btn-ghost btn-sm" type="button" onClick={salir}>Salir</button>
+        </div>
+      </nav>
+
+      <main id="portal" className="portal">
+        <div className="portal-inner">
+          <div className="portal-header">
+            <div className="kicker">// Tu portal</div>
+            <h2 className="serif">{patient.full_name}</h2>
+            <p className="serif slogan">Tu salud, <b>en SERIO</b></p>
+            <div className="tag-row">
+              <span className="pill">{patient.document_number}</span>
+              {a !== null && <span className="pill">{a} años{patient.sex ? ` · ${patient.sex}` : ''}</span>}
+              {patient.blood_type && <span className="pill">Tipo {patient.blood_type}</span>}
+              <span className="pill pill-solid">{patient.insurance_eps}</span>
+            </div>
+          </div>
+
+          <div className="card dropzone-soon">
+            <IconArrow />
+            <span>La carga automática de documentos (PDF, Word o foto de tu historia clínica) llegará en una próxima fase. Por ahora agrega tus datos en cada sección.</span>
+          </div>
+
+          <div className="tile-grid">
+            <Tile id="tile-asistente" className="assistant-tile" info kicker="Apoyo legal" title="¿Tu EPS negó tu tratamiento?" icon={<IconAsistente />}
+              preview="Genera tu Derecho de Petición o Acción de Tutela en EnSERIO." isOpen={open === 'asistente'} onToggle={() => toggle('asistente')}>
+              <p style={{ fontSize: 13, marginBottom: 14 }}>EnSERIO te guía con un cuestionario y arma el borrador de tu Derecho de Petición o Acción de Tutela con tus datos.</p>
+              <a className="btn" href={ENSERIO_URL} target="_blank" rel="noopener noreferrer">Generar mi documento en EnSERIO <IconArrow /></a>
+            </Tile>
+
+            <Tile id="tile-citas" kicker="Agenda" title="Citas y línea de tiempo" icon={<IconCitas />}
+              preview={proxima ? `Próxima: ${proxima.specialty_name} — ${new Date(proxima.appointment_date).toLocaleDateString('es-CO')}` : 'Sin citas registradas'}
+              isOpen={open === 'citas'} onToggle={() => toggle('citas')}>
+              <div className="two-cols">
+                <EntityList entity="appointments" heading="Citas" rows={rows('appointments')} onChanged={() => refresh('appointments')} onNotice={toast} />
+                <EntityList entity="timeline" heading="Línea de tiempo" rows={rows('timeline')} onChanged={() => refresh('timeline')} onNotice={toast} />
+              </div>
+            </Tile>
+
+            <Tile id="tile-personal" kicker="Perfil" title="Información personal" icon={<IconPersonal />}
+              preview={`${patient.document_number} · ${patient.insurance_eps}`} isOpen={open === 'personal'} onToggle={() => toggle('personal')}>
+              {editing ? (
+                <EntityForm
+                  fields={PATIENT_FIELDS} method="PATCH" path="/api/patient" submitLabel="Guardar cambios"
+                  initial={Object.fromEntries(PATIENT_FIELDS.map((f) => [f.name, toInputValue(f, patient[f.name])]))}
+                  onCancel={() => setEditing(false)}
+                  onSaved={(p) => { setPatient(p); setEditing(false); toast('Datos corregidos.'); }}
+                />
+              ) : (
+                <>
+                  <div className="fields-grid">
+                    {[
+                      ['Fecha de nacimiento', fechaCorta(patient.birth_date)], ['Teléfono', patient.phone], ['Correo de contacto', patient.contact_email],
+                      ['Dirección', patient.address], ['Contacto de emergencia', [patient.emergency_contact_name, patient.emergency_contact_phone].filter(Boolean).join(' — ')],
+                      ['EPS / seguro', patient.insurance_eps],
+                    ].map(([l, v]) => (
+                      <div key={l}><div className="lbl">{l}</div><div>{v || <span style={{ opacity: .5 }}>Sin dato</span>}</div></div>
+                    ))}
+                  </div>
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 14 }} onClick={() => setEditing(true)}>Corregir mis datos</button>
+                </>
+              )}
+            </Tile>
+
+            <Tile id="tile-especialidad" kicker="Historia clínica" title="Por especialidad" icon={<IconEspecialidad />}
+              preview={espPreview} isOpen={open === 'especialidad'} onToggle={() => toggle('especialidad')}>
+              <EntityList entity="specialties" rows={rows('specialties')} onChanged={() => refresh('specialties')} onNotice={toast} />
+            </Tile>
+
+            <Tile id="tile-tratamientos" kicker="Seguimiento" title="Tratamientos" icon={<IconTratamientos />}
+              preview={`${rows('treatments').length} tratamiento(s)`} isOpen={open === 'tratamientos'} onToggle={() => toggle('tratamientos')}>
+              <EntityList entity="treatments" rows={rows('treatments')} onChanged={() => refresh('treatments')} onNotice={toast} />
+            </Tile>
+
+            <Tile id="tile-labs" kicker="Resultados" title="Exámenes de laboratorio" icon={<IconLabs />}
+              preview={rows('labs')[0] ? `${rows('labs')[0].test_name} — ${rows('labs')[0].status}` : 'Sin resultados todavía'}
+              isOpen={open === 'labs'} onToggle={() => toggle('labs')}>
+              <EntityList entity="labs" rows={rows('labs')} onChanged={() => refresh('labs')} onNotice={toast} />
+            </Tile>
+
+            <Tile id="tile-medicamentos" kicker="Medicación" title="Medicamentos y alergias" icon={<IconMeds />}
+              preview={`${rows('medications').length} medicamento(s) · ${rows('allergies').length} alergia(s)`} isOpen={open === 'medicamentos'} onToggle={() => toggle('medicamentos')}>
+              <div className="two-cols">
+                <EntityList entity="medications" heading="Medicamentos actuales" rows={rows('medications')} onChanged={() => refresh('medications')} onNotice={toast} />
+                <EntityList entity="allergies" heading="Alergias" rows={rows('allergies')} onChanged={() => refresh('allergies')} onNotice={toast} />
+              </div>
+            </Tile>
+
+            <Tile id="tile-instituciones" kicker="Directorio" title="Instituciones médicas" icon={<IconInstituciones />}
+              preview={`${INSTITUCIONES.length} hospitales, IPS y clínicas — registra tu cita en la que elijas`} isOpen={open === 'instituciones'} onToggle={() => toggle('instituciones')}>
+              <p style={{ fontSize: 13, opacity: .8, marginBottom: 8 }}>Elige la institución donde tienes tu cita y regístrala; aparecerá en “Citas y línea de tiempo”.</p>
+              {INSTITUCIONES.map((i) => (
+                <div key={i.name}>
+                  <div className="dir-row">
+                    <span className="grow">{i.name} <span className="city">{i.city}</span></span>
+                    <span className="tag">{i.type}</span>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setBookingFor(bookingFor === i.name ? null : i.name)}>
+                      {bookingFor === i.name ? 'Cerrar' : 'Registrar cita'}
+                    </button>
+                  </div>
+                  {bookingFor === i.name && (
+                    <div className="add-box">
+                      <EntityForm
+                        fields={[
+                          { name: 'appointment_date', label: 'Fecha y hora', kind: 'datetime', required: true },
+                          { name: 'specialty_name', label: 'Especialidad', required: true },
+                          { name: 'doctor_name', label: 'Médico', required: true, full: true },
+                        ]}
+                        method="POST" path="/api/appointments" extra={{ location: `${i.name} — ${i.city}` }} submitLabel="Registrar cita"
+                        onCancel={() => setBookingFor(null)}
+                        onSaved={() => { setBookingFor(null); refresh('appointments'); toast('Cita registrada.'); }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </Tile>
+
+            <Tile id="tile-derechos" kicker="Ley 1581 de 2012" title="Mis derechos sobre mis datos" icon={<IconDerechos />}
+              preview="Descargar, corregir o solicitar la eliminación de tus datos" isOpen={open === 'derechos'} onToggle={() => toggle('derechos')}>
+              <p style={{ fontSize: 13, marginBottom: 14 }}>Tus datos son tuyos. Puedes descargarlos completos (incluido quién los ha consultado), corregirlos en cada sección o pedir que los eliminemos.</p>
+              <div className="rights">
+                <a className="btn btn-ghost btn-sm" href="/api/export">Descargar mis datos (JSON)</a>
+                <button type="button" className="btn btn-danger btn-sm" onClick={solicitarEliminacion}>Solicitar eliminación de mis datos</button>
+              </div>
+            </Tile>
+          </div>
+
+          <p className="footnote">Prototipo local del Portal del Paciente. Los datos que ves están guardados en la base de datos de tu proyecto, protegidos por sesión y control de acceso por paciente. El texto legal de autorización es provisional y debe ser revisado por un abogado antes de publicar.</p>
+        </div>
+      </main>
+
+      {notice && <div className="card toast" role="status">{notice}</div>}
+    </>
+  );
+}
