@@ -131,3 +131,33 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .rights { display: flex; gap: 10px; flex-wrap: wrap; }
 .footnote { font-size: 12px; color: var(--ink-soft); opacity: .85; max-width: 680px; margin-top: 24px; line-height: 1.5; }
 
+/* ---------- aviso del "resumen para consulta" dentro del portal ---------- */
+.resumen-cta { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; margin-bottom: 12px; flex-wrap: wrap; }
+.resumen-cta p { font-size: 13px; opacity: .8; margin-top: 4px; max-width: 52ch; }
+
+/* ---------- página /resumen: documento para llevar o mostrar al médico ---------- */
+.resumen-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; background: #fff; border-bottom: 2px solid var(--line); flex-wrap: wrap; }
+.resumen { max-width: 760px; margin: 0 auto; padding: 24px 20px 48px; }
+.resumen-header { border-bottom: 3px solid var(--navy); padding-bottom: 14px; margin-bottom: 18px; }
+.resumen-header h1 { font-size: 30px; margin: 4px 0 8px; font-weight: 400; }
+.resumen-meta { font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
+.resumen-section { margin-bottom: 18px; break-inside: avoid; }
+.resumen-section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--navy); border-bottom: 1px solid var(--line); padding-bottom: 4px; margin: 0 0 8px; font-weight: 600; font-style: normal; }
+.resumen-alert { border: 2px solid var(--danger); border-radius: .8rem; padding: 12px 14px; background: var(--danger-bg); }
+.resumen-alert h2 { color: var(--danger); border-color: var(--danger); }
+.resumen-item { padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.resumen-item:first-of-type { border-top: 0; }
+.resumen-item p { margin: 2px 0; }
+.resumen-sub { opacity: .7; font-size: 12px; }
+.resumen ul { margin: 0; padding-left: 18px; }
+.resumen li { margin-bottom: 4px; font-size: 13px; }
+.resumen-aviso { max-width: 760px; margin: 0 auto; padding: 10px 20px 0; font-size: 13px; color: var(--ink-soft); }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; background-image: none !important; }
+  .resumen { max-width: none; padding: 0; }
+  .resumen-alert, .tag, .pill, .pill-solid { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  a[href]::after { content: none !important; }
+}
+

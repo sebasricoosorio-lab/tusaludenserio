@@ -118,7 +118,7 @@ export default function PortalApp() {
         <span className="card serif nav-brand">portal</span>
         <div className="card nav-links">
           <a href="#portal">Mi historia</a>
-          <a href="#tile-citas">Citas</a>
+          <a href="/resumen" target="_blank" rel="noopener noreferrer">Resumen para consulta</a>
           <a href="#tile-derechos">Mis derechos</a>
         </div>
         <div className="nav-right">
@@ -139,6 +139,14 @@ export default function PortalApp() {
               {patient.blood_type && <span className="pill">Tipo {patient.blood_type}</span>}
               <span className="pill pill-solid">{patient.insurance_eps}</span>
             </div>
+          </div>
+
+          <div className="card resumen-cta">
+            <div>
+              <strong>Resumen para tu consulta</strong>
+              <p>Un solo documento con tus alergias, medicamentos, tratamientos y diagnósticos al día — muéstralo o imprímelo la próxima vez que veas a un especialista, sin tener que contar todo de nuevo.</p>
+            </div>
+            <a className="btn btn-sm" href="/resumen" target="_blank" rel="noopener noreferrer">Ver resumen <IconArrow /></a>
           </div>
 
           <div className="card dropzone-soon">
