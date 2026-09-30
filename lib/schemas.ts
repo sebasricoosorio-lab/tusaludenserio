@@ -185,19 +185,20 @@ const correo = z
   .email('El correo electrónico no es válido')
   .max(254);
 
-export const registerBody = z
-  .object({
-    email: correo,
-    // 72 = límite de bcrypt. Mínimo 10 para una contraseña razonable.
-    password: z
-      .string({ required_error: 'Falta la contraseña' })
-      .min(10, 'La contraseña debe tener al menos 10 caracteres')
-      .max(72, 'La contraseña no puede superar 72 caracteres'),
-  })
-  .strict();
+// 72 = límite de bcrypt. Mínimo 10 para una contraseña razonable.
+const contrasenaNueva = z
+  .string({ required_error: 'Falta la contraseña' })
+  .min(10, 'La contraseña debe tener al menos 10 caracteres')
+  .max(72, 'La contraseña no puede superar 72 caracteres');
+
+export const registerBody = z.object({ email: correo, password: contrasenaNueva }).strict();
 
 export const loginBody = z
   .object({ email: correo, password: z.string({ required_error: 'Falta la contraseña' }).min(1, 'Falta la contraseña').max(72) })
   .strict();
 
 export const magicLinkBody = z.object({ email: correo }).strict();
+
+export const resetPasswordBody = z.object({ email: correo }).strict();
+
+export const newPasswordBody = z.object({ password: contrasenaNueva }).strict();

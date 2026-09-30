@@ -21,7 +21,7 @@ function GateShell({ children }: { children: ReactNode }) {
 }
 
 // ---------------------------------------------------------------- Ingreso
-type Modo = 'login' | 'register' | 'magic';
+type Modo = 'login' | 'register' | 'magic' | 'reset';
 
 export function AuthScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [modo, setModo] = useState<Modo>('login');
@@ -30,6 +30,12 @@ export function AuthScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  function cambiarModo(m: Modo) {
+    setModo(m);
+    setError(null);
+    setInfo(null);
+  }
 
   async function enviar(e: FormEvent) {
     e.preventDefault();
@@ -43,8 +49,11 @@ export function AuthScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
       } else if (modo === 'register') {
         const r = await api<Row>('POST', '/api/auth/register', { email, password });
         setInfo(r?.message ?? 'Revisa tu correo para confirmar la cuenta.');
-      } else {
+      } else if (modo === 'magic') {
         const r = await api<Row>('POST', '/api/auth/magic-link', { email });
+        setInfo(r?.message ?? 'Revisa tu correo.');
+      } else {
+        const r = await api<Row>('POST', '/api/auth/reset-password', { email });
         setInfo(r?.message ?? 'Revisa tu correo.');
       }
     } catch (err) {
@@ -57,31 +66,46 @@ export function AuthScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
   return (
     <GateShell>
       <div className="card gate-card">
-        <div className="tabs" role="tablist" aria-label="Forma de acceso">
-          {([['login', 'Ingresar'], ['register', 'Crear cuenta'], ['magic', 'Enlace por correo']] as [Modo, string][]).map(([m, t]) => (
-            <button key={m} type="button" role="tab" className="tab" aria-selected={modo === m} onClick={() => { setModo(m); setError(null); setInfo(null); }}>
-              {t}
-            </button>
-          ))}
-        </div>
+        {modo === 'reset' ? (
+          <>
+            <h2 className="serif">Restablecer contraseña</h2>
+            <p className="lead">Te enviamos un enlace de un solo uso para poner una contraseña nueva.</p>
+          </>
+        ) : (
+          <div className="tabs" role="tablist" aria-label="Forma de acceso">
+            {([['login', 'Ingresar'], ['register', 'Crear cuenta'], ['magic', 'Enlace por correo']] as [Modo, string][]).map(([m, t]) => (
+              <button key={m} type="button" role="tab" className="tab" aria-selected={modo === m} onClick={() => cambiarModo(m)}>
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
         <form onSubmit={enviar}>
           <div className="form-grid" style={{ gridTemplateColumns: '1fr' }}>
             <div className="field">
               <label htmlFor="auth-email">Correo electrónico</label>
               <input id="auth-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
-            {modo !== 'magic' && (
+            {(modo === 'login' || modo === 'register') && (
               <div className="field">
                 <label htmlFor="auth-pass">Contraseña{modo === 'register' ? ' (mínimo 10 caracteres)' : ''}</label>
                 <input id="auth-pass" type="password" autoComplete={modo === 'login' ? 'current-password' : 'new-password'} required value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
             )}
           </div>
+          {modo === 'login' && (
+            <button type="button" className="icon-btn" style={{ padding: '6px 0', marginTop: -6 }} onClick={() => cambiarModo('reset')}>
+              ¿Olvidaste tu contraseña?
+            </button>
+          )}
           {error && <div className="msg-error" role="alert">{error}</div>}
           {info && <div className="msg-ok" role="status">{info}</div>}
           <div className="form-actions">
+            {modo === 'reset' && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => cambiarModo('login')}>Volver a ingresar</button>
+            )}
             <button className="btn" type="submit" disabled={busy}>
-              {busy ? 'Un momento…' : modo === 'login' ? 'Ingresar' : modo === 'register' ? 'Crear cuenta' : 'Enviarme el enlace'}
+              {busy ? 'Un momento…' : modo === 'login' ? 'Ingresar' : modo === 'register' ? 'Crear cuenta' : modo === 'magic' ? 'Enviarme el enlace' : 'Enviarme el enlace'}
             </button>
           </div>
         </form>
