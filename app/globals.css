@@ -82,7 +82,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .toast { position: fixed; bottom: 24px; right: 24px; max-width: 360px; border-radius: 16px; padding: 14px 16px; font-size: 14px; z-index: 60; animation: rise .25s ease; }
 @keyframes rise { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-.dropzone-soon { border-radius: .9rem; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; display: flex; gap: 12px; align-items: center; border-style: dashed; color: var(--ink-soft); font-size: 14px; }
 
 /* 2 columnas: las cerradas van de a dos; la abierta y la de EnSERIO ocupan todo el ancho */
 .tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }

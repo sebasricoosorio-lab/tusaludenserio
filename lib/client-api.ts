@@ -34,6 +34,22 @@ export async function api<T = Row>(method: string, path: string, body?: unknown)
   return json?.data as T;
 }
 
+// Para subir archivos (multipart/form-data): sin Content-Type manual, el
+// navegador pone el boundary correcto solo.
+export async function apiUpload<T = Row>(path: string, form: FormData): Promise<T> {
+  const res = await fetch(path, { method: 'POST', credentials: 'same-origin', body: form });
+  let json: Row | null = null;
+  try {
+    json = await res.json();
+  } catch {
+    /* respuesta sin cuerpo JSON */
+  }
+  if (!res.ok) {
+    throw new ApiFail(res.status, json?.error?.code ?? 'ERROR', json?.error?.message ?? 'Ocurrió un error. Intenta de nuevo.', json?.error?.fields);
+  }
+  return json?.data as T;
+}
+
 export function mensajeDeError(e: unknown): string {
   return e instanceof Error ? e.message : 'Ocurrió un error. Intenta de nuevo.';
 }

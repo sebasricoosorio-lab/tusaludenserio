@@ -20,3 +20,4 @@ export const IconInstituciones = () => <Svg><path d="M3 21h18M5 21V9l7-5 7 5v12M
 export const IconDerechos = () => <Svg><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></Svg>;
 export const IconChevron = () => <Svg size={16}><path d="M6 9l6 6 6-6" /></Svg>;
 export const IconArrow = () => <Svg size={16}><path d="M7 17L17 7" /><path d="M7 7h10v10" /></Svg>;
+export const IconDocumento = () => <Svg><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></Svg>;

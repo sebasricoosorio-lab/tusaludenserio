@@ -9,13 +9,27 @@ import { ENTITY_KEYS, ENSERIO_URL, INSTITUCIONES, PATIENT_FIELDS, fechaCorta } f
 import { AuthScreen, ConsentGate, ProfileGate } from '@/components/Gates';
 import EntityList from '@/components/EntityList';
 import EntityForm, { toInputValue } from '@/components/EntityForm';
+import Documentos from '@/components/Documentos';
 import Tile from '@/components/Tile';
 import {
-  IconArrow, IconAsistente, IconCitas, IconDerechos, IconEspecialidad,
+  IconArrow, IconAsistente, IconCitas, IconDerechos, IconDocumento, IconEspecialidad,
   IconInstituciones, IconLabs, IconMeds, IconPersonal, IconTratamientos,
 } from '@/components/icons';
 
 type Phase = 'loading' | 'auth' | 'consent' | 'profile' | 'portal';
+const ALL_KEYS = [...ENTITY_KEYS, 'documents'];
+
+// Arma el texto de la solicitud de cita para enviar por WhatsApp o correo.
+// No inventa ni asume ningún dato de contacto de la institución: el propio
+// paciente elige a quién enviárselo desde su celular/correo.
+function mensajeSolicitud(inst: { name: string; city: string }, patient: Row, especialidad: string, fecha: string) {
+  const partes = [
+    `Hola, soy ${patient.full_name}, documento ${patient.document_number}, afiliado(a) a ${patient.insurance_eps}.`,
+    `Quisiera solicitar una cita${especialidad ? ` de ${especialidad}` : ''} en ${inst.name} (${inst.city})${fecha ? `, preferiblemente ${fecha}` : ''}.`,
+    'Gracias.',
+  ];
+  return partes.join(' ');
+}
 function edad(birth?: string | null) {
   if (!birth) return null;
   const [y, m, d] = birth.split('-').map(Number);
@@ -34,6 +48,14 @@ export default function PortalApp() {
   const [notice, setNotice] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [bookingFor, setBookingFor] = useState<string | null>(null);
+  const [solEspecialidad, setSolEspecialidad] = useState('');
+  const [solFecha, setSolFecha] = useState('');
+
+  function abrirSolicitud(nombre: string) {
+    setSolEspecialidad('');
+    setSolFecha('');
+    setBookingFor(bookingFor === nombre ? null : nombre);
+  }
 
   const toast = useCallback((msg: string) => {
     setNotice(msg);
@@ -41,9 +63,9 @@ export default function PortalApp() {
   }, []);
 
   const loadAll = useCallback(async () => {
-    const results = await Promise.all(ENTITY_KEYS.map((k) => api<Row[]>('GET', `/api/${k}`)));
+    const results = await Promise.all(ALL_KEYS.map((k) => api<Row[]>('GET', `/api/${k}`)));
     const next: Record<string, Row[]> = {};
-    ENTITY_KEYS.forEach((k, i) => (next[k] = results[i]));
+    ALL_KEYS.forEach((k, i) => (next[k] = results[i]));
     setData(next);
   }, []);
 
@@ -149,11 +171,6 @@ export default function PortalApp() {
             <a className="btn btn-sm" href="/resumen" target="_blank" rel="noopener noreferrer">Ver resumen <IconArrow /></a>
           </div>
 
-          <div className="card dropzone-soon">
-            <IconArrow />
-            <span>La carga automática de documentos (PDF, Word o foto de tu historia clínica) llegará en una próxima fase. Por ahora agrega tus datos en cada sección.</span>
-          </div>
-
           <div className="tile-grid">
             <Tile id="tile-asistente" className="assistant-tile" info kicker="Apoyo legal" title="¿Tu EPS negó tu tratamiento?" icon={<IconAsistente />}
               preview="Genera tu Derecho de Petición o Acción de Tutela en EnSERIO." isOpen={open === 'asistente'} onToggle={() => toggle('asistente')}>
@@ -219,20 +236,52 @@ export default function PortalApp() {
               </div>
             </Tile>
 
+            <Tile id="tile-documentos" kicker="Archivos" title="Documentos" icon={<IconDocumento />}
+              preview={`${rows('documents').length} documento(s) guardado(s)`} isOpen={open === 'documentos'} onToggle={() => toggle('documentos')}>
+              <p style={{ fontSize: 13, opacity: .8, marginBottom: 8 }}>Guarda el PDF o la foto de tu historia clínica, fórmulas o resultados para tenerlos a la mano. No se procesa ni se lee su contenido automáticamente.</p>
+              <Documentos rows={rows('documents')} onChanged={() => refresh('documents')} onNotice={toast} />
+            </Tile>
+
             <Tile id="tile-instituciones" kicker="Directorio" title="Instituciones médicas" icon={<IconInstituciones />}
               preview={`${INSTITUCIONES.length} hospitales, IPS y clínicas — registra tu cita en la que elijas`} isOpen={open === 'instituciones'} onToggle={() => toggle('instituciones')}>
-              <p style={{ fontSize: 13, opacity: .8, marginBottom: 8 }}>Elige la institución donde tienes tu cita y regístrala; aparecerá en “Citas y línea de tiempo”.</p>
+              <p style={{ fontSize: 13, opacity: .8, marginBottom: 8 }}>Arma tu solicitud de cita para enviarla por WhatsApp o correo, y regístrala aquí cuando la confirmen.</p>
               {INSTITUCIONES.map((i) => (
                 <div key={i.name}>
                   <div className="dir-row">
                     <span className="grow">{i.name} <span className="city">{i.city}</span></span>
                     <span className="tag">{i.type}</span>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setBookingFor(bookingFor === i.name ? null : i.name)}>
-                      {bookingFor === i.name ? 'Cerrar' : 'Registrar cita'}
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => abrirSolicitud(i.name)}>
+                      {bookingFor === i.name ? 'Cerrar' : 'Solicitar cita'}
                     </button>
                   </div>
                   {bookingFor === i.name && (
                     <div className="add-box">
+                      <div className="form-grid" style={{ marginBottom: 10 }}>
+                        <div className="field">
+                          <label htmlFor={`sol-esp-${i.name}`}>Especialidad deseada</label>
+                          <input id={`sol-esp-${i.name}`} type="text" value={solEspecialidad} onChange={(e) => setSolEspecialidad(e.target.value)} placeholder="Ej: Neurología" />
+                        </div>
+                        <div className="field">
+                          <label htmlFor={`sol-fecha-${i.name}`}>Fecha preferida (opcional)</label>
+                          <input id={`sol-fecha-${i.name}`} type="text" value={solFecha} onChange={(e) => setSolFecha(e.target.value)} placeholder="Ej: la próxima semana" />
+                        </div>
+                      </div>
+                      <div className="tag-row" style={{ justifyContent: 'flex-start', marginBottom: 16 }}>
+                        <a
+                          className="btn btn-sm"
+                          href={`https://wa.me/?text=${encodeURIComponent(mensajeSolicitud(i, patient, solEspecialidad, solFecha))}`}
+                          target="_blank" rel="noopener noreferrer"
+                        >
+                          Enviar por WhatsApp
+                        </a>
+                        <a
+                          className="btn btn-ghost btn-sm"
+                          href={`mailto:?subject=${encodeURIComponent(`Solicitud de cita — ${i.name}`)}&body=${encodeURIComponent(mensajeSolicitud(i, patient, solEspecialidad, solFecha))}`}
+                        >
+                          Enviar por correo
+                        </a>
+                      </div>
+                      <p style={{ fontSize: 12, opacity: .7, marginBottom: 8 }}>¿Ya te confirmaron la cita? Regístrala para verla en “Citas y línea de tiempo”:</p>
                       <EntityForm
                         fields={[
                           { name: 'appointment_date', label: 'Fecha y hora', kind: 'datetime', required: true },

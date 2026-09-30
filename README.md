@@ -20,7 +20,9 @@ npm run dev                  # http://localhost:3000
 Antes de usarlo necesitas un proyecto de Supabase con el esquema aplicado:
 
 1. Crea un proyecto en [supabase.com](https://supabase.com).
-2. Copia todo `supabase/schema.sql` y ejecútalo una sola vez en **SQL Editor**.
+2. Copia todo `supabase/schema.sql` y ejecútalo una sola vez en **SQL Editor**;
+   luego haz lo mismo con `supabase/migration_002_documents.sql` (agrega la
+   tabla y el bucket de Storage para documentos clínicos).
 3. En **Authentication → Providers → Email**, activa *Confirm email*.
 4. En **Authentication → URL Configuration**, agrega `SITE_URL/auth/callback` a *Redirect URLs*.
 5. Completa `.env.local` con los valores de **Project Settings → API Keys** y **Data API** (ver `.env.example`).
@@ -38,7 +40,15 @@ Backend (rutas de API + esquema SQL con RLS) y frontend conectados y
 verificados contra un proyecto Supabase real: aislamiento entre pacientes,
 consentimiento obligatorio para guardar datos, y auditoría de accesos.
 
+También incluye: resumen para consulta médica con lo más reciente de la
+historia clínica y opción de compartirlo con el médico (PDF, `/resumen`);
+carga de documentos clínicos (PDF/foto, sin OCR, guardados en Supabase
+Storage — ver `supabase/migration_002_documents.sql`); directorio de
+instituciones con solicitud de cita por WhatsApp/correo; y la app es
+instalable como PWA (ícono, manifest y un service worker que solo acelera
+la carga del "cascarón", sin guardar datos clínicos en el dispositivo).
+
 Pendiente: revisión legal del texto de consentimiento (`supabase/schema.sql`,
-tabla `consent_texts`), carga real de documentos (OCR) y búsqueda real de
-citas. Detalles en los comentarios de `supabase/schema.sql` y en
-`scripts/verificar.mjs` (script de verificación de aislamiento entre cuentas).
+tabla `consent_texts`). Detalles en los comentarios de `supabase/schema.sql`
+y en `scripts/verificar.mjs` (script de verificación de aislamiento entre
+cuentas).
