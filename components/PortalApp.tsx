@@ -14,6 +14,7 @@ import { AuthScreen, ConsentGate, ProfileGate } from '@/components/Gates';
 import EntityList from '@/components/EntityList';
 import EntityForm, { toInputValue } from '@/components/EntityForm';
 import Documentos from '@/components/Documentos';
+import Collapsible from '@/components/Collapsible';
 import {
   IconArrow, IconCitas, IconDerechos, IconDocumento, IconEspecialidad,
   IconInicio, IconPersonal,
@@ -196,34 +197,34 @@ export default function PortalApp() {
               {section === 'historia' && (
                 <>
                   <h2 className="serif" style={{ margin: '0 0 16px' }}>Historia clínica</h2>
-                  <div className="panel-section">
-                    <h3 className="sub-title">Por especialidad</h3>
+                  <Collapsible title="Por especialidad" defaultOpen>
                     <EntityList entity="specialties" rows={rows('specialties')} onChanged={() => refresh('specialties')} onNotice={toast} />
-                  </div>
-                  <div className="panel-section">
-                    <h3 className="sub-title">Tratamientos</h3>
+                  </Collapsible>
+                  <Collapsible title="Tratamientos">
                     <EntityList entity="treatments" rows={rows('treatments')} onChanged={() => refresh('treatments')} onNotice={toast} />
-                  </div>
-                  <div className="panel-section">
-                    <h3 className="sub-title">Exámenes de laboratorio</h3>
+                  </Collapsible>
+                  <Collapsible title="Exámenes de laboratorio">
                     <EntityList entity="labs" rows={rows('labs')} onChanged={() => refresh('labs')} onNotice={toast} />
-                  </div>
-                  <div className="panel-section two-cols">
-                    <EntityList entity="medications" heading="Medicamentos actuales" rows={rows('medications')} onChanged={() => refresh('medications')} onNotice={toast} />
-                    <EntityList entity="allergies" heading="Alergias" rows={rows('allergies')} onChanged={() => refresh('allergies')} onNotice={toast} />
-                  </div>
+                  </Collapsible>
+                  <Collapsible title="Medicamentos y alergias">
+                    <div className="two-cols">
+                      <EntityList entity="medications" heading="Medicamentos actuales" rows={rows('medications')} onChanged={() => refresh('medications')} onNotice={toast} />
+                      <EntityList entity="allergies" heading="Alergias" rows={rows('allergies')} onChanged={() => refresh('allergies')} onNotice={toast} />
+                    </div>
+                  </Collapsible>
                 </>
               )}
 
               {section === 'agenda' && (
                 <>
                   <h2 className="serif" style={{ margin: '0 0 16px' }}>Agenda</h2>
-                  <div className="panel-section two-cols">
-                    <EntityList entity="appointments" heading="Citas" rows={rows('appointments')} onChanged={() => refresh('appointments')} onNotice={toast} />
-                    <EntityList entity="timeline" heading="Línea de tiempo" rows={rows('timeline')} onChanged={() => refresh('timeline')} onNotice={toast} />
-                  </div>
-                  <div className="panel-section">
-                    <h3 className="sub-title">Instituciones médicas</h3>
+                  <Collapsible title="Citas y línea de tiempo" defaultOpen>
+                    <div className="two-cols">
+                      <EntityList entity="appointments" heading="Citas" rows={rows('appointments')} onChanged={() => refresh('appointments')} onNotice={toast} />
+                      <EntityList entity="timeline" heading="Línea de tiempo" rows={rows('timeline')} onChanged={() => refresh('timeline')} onNotice={toast} />
+                    </div>
+                  </Collapsible>
+                  <Collapsible title="Instituciones médicas">
                     <p style={{ fontSize: 13, opacity: .8, marginBottom: 8 }}>Arma tu solicitud de cita para enviarla por WhatsApp o correo, y regístrala aquí cuando la confirmen.</p>
                     {INSTITUCIONES.map((i) => (
                       <div key={i.name}>
@@ -276,7 +277,7 @@ export default function PortalApp() {
                         )}
                       </div>
                     ))}
-                  </div>
+                  </Collapsible>
                 </>
               )}
 

@@ -91,6 +91,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .panel h2 { font-size: 26px; font-weight: 400; }
 .panel-section { margin-bottom: 22px; }
 .panel-section:last-child { margin-bottom: 0; }
+.collapsible-head { display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: 0; padding: 0 0 8px; cursor: pointer; text-align: left; }
+.collapsible-chevron { flex: none; color: var(--navy); opacity: .6; transition: transform .2s; }
+.collapsible-body { animation: rise .2s ease; }
 
 .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 @media (max-width: 760px) { .two-cols { grid-template-columns: 1fr; } }
