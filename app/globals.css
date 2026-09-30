@@ -58,51 +58,39 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .msg-error { font-size: 13px; color: var(--danger); background: var(--danger-bg); border-radius: .6rem; padding: 10px 12px; margin-top: 12px; }
 .msg-ok { font-size: 13px; color: var(--ok); background: var(--ok-bg); border-radius: .6rem; padding: 10px 12px; margin-top: 12px; }
 
-/* ---------- barra superior y héroe ---------- */
+/* ---------- barra superior ---------- */
 .navbar { position: fixed; top: 16px; left: 0; right: 0; z-index: 50; display: flex; align-items: center; gap: 12px; padding: 0 16px; }
 @media (min-width: 1024px) { .navbar { padding: 0 64px; } }
 .nav-brand { font-size: 22px; padding: 6px 16px; border-radius: 9999px; }
-.nav-links { display: none; margin: 0 auto; border-radius: 9999px; padding: 6px; }
-@media (min-width: 900px) { .nav-links { display: flex; } }
-.nav-links a { padding: 8px 12px; font-size: 14px; font-weight: 500; text-decoration: none; }
-.nav-links a:hover { color: var(--navy); }
 .nav-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 
 /* ---------- portal ---------- */
 .portal { padding: 78px 16px 40px; } /* deja sitio a la barra fija */
 @media (min-width: 1024px) { .portal { padding: 78px 64px 40px; } }
 .portal-inner { max-width: 1152px; margin: 0 auto; }
-.portal-header { text-align: center; margin-bottom: 16px; }
 .kicker { font-size: 13px; color: var(--navy); font-weight: 500; margin-bottom: 6px; }
-.portal-header h2 { font-size: 34px; line-height: .95; letter-spacing: -1.5px; margin: 0; font-weight: 400; }
-@media (min-width: 768px) { .portal-header h2 { font-size: 44px; } }
-.slogan { font-size: 18px; margin-top: 4px; }
-.slogan b { font-style: normal; font-weight: 800; color: var(--navy); }
-.tag-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+.tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .toast { position: fixed; bottom: 24px; right: 24px; max-width: 360px; border-radius: 16px; padding: 14px 16px; font-size: 14px; z-index: 60; animation: rise .25s ease; }
 @keyframes rise { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 
+/* ---------- menú lateral + panel: una sola superficie de contenido para
+   que todas las secciones compartan el mismo espaciado y tipografía ---------- */
+.shell { display: flex; gap: 20px; align-items: flex-start; }
+@media (max-width: 860px) { .shell { flex-direction: column; } }
 
-/* 2 columnas: las cerradas van de a dos; la abierta y la de EnSERIO ocupan todo el ancho */
-.tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
-.tile-grid .tile.open, .tile-grid .assistant-tile { grid-column: 1 / -1; }
-@media (max-width: 760px) { .tile-grid { grid-template-columns: 1fr; } }
-.tile { border-radius: 1rem; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px; transition: box-shadow .2s, background .2s, border-color .2s; }
-.tile.open { box-shadow: 0 4px 14px rgba(15, 23, 42, .1); border-color: var(--navy-dark); }
-.tile.info { background: var(--navy-tint); border-color: var(--navy-bright); }
-.tile-head { display: flex; align-items: center; gap: 12px; cursor: pointer; background: none; border: 0; padding: 0; text-align: left; width: 100%; color: inherit; }
-.tile-icon { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--navy-tint); color: var(--navy); }
-.tile.info .tile-icon { background: #fff; color: var(--navy-bright); }
-.tile.open .tile-icon { background: var(--navy); color: #fff; }
-.tile-titles { flex: 1; min-width: 0; }
-.tile-kicker { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--navy); font-weight: 500; }
-.tile-title { font-size: 20px; line-height: 1.15; }
-.tile-chevron { flex: none; opacity: .55; color: var(--navy); transition: transform .25s; }
-.tile.open .tile-chevron { transform: rotate(180deg); }
-.tile-preview { font-size: 13px; opacity: .65; }
-.tile-body { padding-top: 6px; animation: rise .25s ease; }
-.assistant-tile .tile-head { justify-content: center; }
-.assistant-tile .tile-titles { flex: none; text-align: center; }
+.side-nav { position: sticky; top: 94px; display: flex; flex-direction: column; gap: 4px; width: 220px; flex-shrink: 0; }
+@media (max-width: 860px) {
+  .side-nav { position: static; width: 100%; flex-direction: row; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
+}
+.side-nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: .8rem; border: 0; background: none; cursor: pointer; font-size: 14px; color: var(--ink-soft); text-align: left; white-space: nowrap; flex-shrink: 0; }
+.side-nav-item:hover { background: var(--navy-tint); }
+.side-nav-item.active { background: var(--navy); color: #fff; }
+.side-nav-item svg { flex: none; }
+
+.panel { flex: 1; min-width: 0; border-radius: 1rem; padding: 22px 24px; }
+.panel h2 { font-size: 26px; font-weight: 400; }
+.panel-section { margin-bottom: 22px; }
+.panel-section:last-child { margin-bottom: 0; }
 
 .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 @media (max-width: 760px) { .two-cols { grid-template-columns: 1fr; } }
@@ -129,10 +117,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .dir-row .grow { flex: 1; }
 .rights { display: flex; gap: 10px; flex-wrap: wrap; }
 .footnote { font-size: 12px; color: var(--ink-soft); opacity: .85; max-width: 680px; margin-top: 24px; line-height: 1.5; }
-
-/* ---------- aviso del "resumen para consulta" dentro del portal ---------- */
-.resumen-cta { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; margin-bottom: 12px; flex-wrap: wrap; }
-.resumen-cta p { font-size: 13px; opacity: .8; margin-top: 4px; max-width: 52ch; }
 
 /* ---------- página /resumen: documento para llevar o mostrar al médico ---------- */
 .resumen-bar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; background: #fff; border-bottom: 2px solid var(--line); flex-wrap: wrap; }
