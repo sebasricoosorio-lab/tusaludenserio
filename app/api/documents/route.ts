@@ -57,6 +57,9 @@ export const POST = route(async (req) => {
     throw new ApiError(422, 'UNSUPPORTED_TYPE', 'Solo se aceptan archivos PDF, JPG, PNG, HEIC o WEBP.');
   }
 
+  const especialidad = String(form.get('specialty_name') ?? '').trim().slice(0, 120) || null;
+  const descripcion = String(form.get('description') ?? '').trim().slice(0, 300) || null;
+
   const nombreSeguro = file.name.replace(/[^\w.\-() ]/g, '_').slice(0, 120) || 'documento';
   const filePath = `${user.id}/${crypto.randomUUID()}-${nombreSeguro}`;
 
@@ -73,6 +76,8 @@ export const POST = route(async (req) => {
       file_name: file.name.slice(0, 200),
       mime_type: file.type,
       size_bytes: file.size,
+      specialty_name: especialidad,
+      description: descripcion,
     })
     .select()
     .single();
