@@ -170,7 +170,6 @@ export default function PortalApp() {
             <section className="card panel">
               {section === 'inicio' && (
                 <>
-                  <div className="kicker">// Tu portal</div>
                   <h2 className="serif" style={{ margin: '0 0 4px' }}>{patient.full_name}</h2>
                   <div className="tag-row" style={{ justifyContent: 'flex-start', marginBottom: 18 }}>
                     <span className="pill">{patient.document_number}</span>
