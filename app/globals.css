@@ -61,7 +61,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 /* ---------- barra superior ---------- */
 .navbar { position: fixed; top: 16px; left: 0; right: 0; z-index: 50; display: flex; align-items: center; gap: 12px; padding: 0 16px; }
 @media (min-width: 1024px) { .navbar { padding: 0 64px; } }
-.nav-brand { font-size: 22px; padding: 6px 16px; border-radius: 9999px; }
 .nav-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 
 /* ---------- portal ---------- */

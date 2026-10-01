@@ -145,7 +145,6 @@ export default function PortalApp() {
   return (
     <>
       <nav className="navbar" aria-label="Navegación principal">
-        <span className="card serif nav-brand">portal</span>
         <div className="nav-right">
           <button className="btn btn-ghost btn-sm" type="button" onClick={salir}>Salir</button>
         </div>
