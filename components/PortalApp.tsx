@@ -180,17 +180,15 @@ export default function PortalApp() {
                     <span className="pill pill-solid">{patient.insurance_eps}</span>
                   </div>
 
-                  <div className="panel-section">
-                    <h3 className="sub-title">Resumen para tu consulta</h3>
+                  <Collapsible title="Resumen para tu consulta" defaultOpen>
                     <p style={{ fontSize: 13, opacity: .8, marginBottom: 10 }}>Un solo documento con tus alergias, medicamentos, tratamientos y diagnósticos al día — muéstralo o imprímelo la próxima vez que veas a un especialista, sin tener que contar todo de nuevo.</p>
                     <a className="btn btn-sm" href="/resumen" target="_blank" rel="noopener noreferrer">Ver resumen <IconArrow /></a>
-                  </div>
+                  </Collapsible>
 
-                  <div className="panel-section">
-                    <h3 className="sub-title">¿Tu EPS negó tu tratamiento?</h3>
+                  <Collapsible title="¿Tu EPS negó tu tratamiento?">
                     <p style={{ fontSize: 13, opacity: .8, marginBottom: 10 }}>EnSERIO te guía con un cuestionario y arma el borrador de tu Derecho de Petición o Acción de Tutela con tus datos.</p>
                     <a className="btn btn-ghost btn-sm" href={ENSERIO_URL} target="_blank" rel="noopener noreferrer">Generar mi documento en EnSERIO <IconArrow /></a>
-                  </div>
+                  </Collapsible>
                 </>
               )}
 
@@ -284,46 +282,52 @@ export default function PortalApp() {
               {section === 'documentos' && (
                 <>
                   <h2 className="serif" style={{ margin: '0 0 16px' }}>Documentos</h2>
-                  <p style={{ fontSize: 13, opacity: .8, marginBottom: 8 }}>Guarda el PDF o la foto de tu historia clínica, fórmulas o resultados para tenerlos a la mano. No se procesa ni se lee su contenido automáticamente.</p>
-                  <Documentos rows={rows('documents')} onChanged={() => refresh('documents')} onNotice={toast} />
+                  <Collapsible title="Tus documentos" defaultOpen>
+                    <p style={{ fontSize: 13, opacity: .8, marginBottom: 8 }}>Guarda el PDF o la foto de tu historia clínica, fórmulas o resultados para tenerlos a la mano. No se procesa ni se lee su contenido automáticamente.</p>
+                    <Documentos rows={rows('documents')} onChanged={() => refresh('documents')} onNotice={toast} />
+                  </Collapsible>
                 </>
               )}
 
               {section === 'perfil' && (
                 <>
                   <h2 className="serif" style={{ margin: '0 0 16px' }}>Mi perfil</h2>
-                  {editing ? (
-                    <EntityForm
-                      fields={PATIENT_FIELDS} method="PATCH" path="/api/patient" submitLabel="Guardar cambios"
-                      initial={Object.fromEntries(PATIENT_FIELDS.map((f) => [f.name, toInputValue(f, patient[f.name])]))}
-                      onCancel={() => setEditing(false)}
-                      onSaved={(p) => { setPatient(p); setEditing(false); toast('Datos corregidos.'); }}
-                    />
-                  ) : (
-                    <>
-                      <div className="fields-grid">
-                        {[
-                          ['Fecha de nacimiento', fechaCorta(patient.birth_date)], ['Teléfono', patient.phone], ['Correo de contacto', patient.contact_email],
-                          ['Dirección', patient.address], ['Contacto de emergencia', [patient.emergency_contact_name, patient.emergency_contact_phone].filter(Boolean).join(' — ')],
-                          ['EPS / seguro', patient.insurance_eps],
-                        ].map(([l, v]) => (
-                          <div key={l}><div className="lbl">{l}</div><div>{v || <span style={{ opacity: .5 }}>Sin dato</span>}</div></div>
-                        ))}
-                      </div>
-                      <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 14 }} onClick={() => setEditing(true)}>Corregir mis datos</button>
-                    </>
-                  )}
+                  <Collapsible title="Mis datos" defaultOpen>
+                    {editing ? (
+                      <EntityForm
+                        fields={PATIENT_FIELDS} method="PATCH" path="/api/patient" submitLabel="Guardar cambios"
+                        initial={Object.fromEntries(PATIENT_FIELDS.map((f) => [f.name, toInputValue(f, patient[f.name])]))}
+                        onCancel={() => setEditing(false)}
+                        onSaved={(p) => { setPatient(p); setEditing(false); toast('Datos corregidos.'); }}
+                      />
+                    ) : (
+                      <>
+                        <div className="fields-grid">
+                          {[
+                            ['Fecha de nacimiento', fechaCorta(patient.birth_date)], ['Teléfono', patient.phone], ['Correo de contacto', patient.contact_email],
+                            ['Dirección', patient.address], ['Contacto de emergencia', [patient.emergency_contact_name, patient.emergency_contact_phone].filter(Boolean).join(' — ')],
+                            ['EPS / seguro', patient.insurance_eps],
+                          ].map(([l, v]) => (
+                            <div key={l}><div className="lbl">{l}</div><div>{v || <span style={{ opacity: .5 }}>Sin dato</span>}</div></div>
+                          ))}
+                        </div>
+                        <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 14 }} onClick={() => setEditing(true)}>Corregir mis datos</button>
+                      </>
+                    )}
+                  </Collapsible>
                 </>
               )}
 
               {section === 'derechos' && (
                 <>
                   <h2 className="serif" style={{ margin: '0 0 16px' }}>Mis derechos sobre mis datos</h2>
-                  <p style={{ fontSize: 13, marginBottom: 14 }}>Tus datos son tuyos. Puedes descargarlos completos (incluido quién los ha consultado), corregirlos en cada sección o pedir que los eliminemos. (Ley 1581 de 2012)</p>
-                  <div className="rights">
-                    <a className="btn btn-ghost btn-sm" href="/api/export">Descargar mis datos (JSON)</a>
-                    <button type="button" className="btn btn-danger btn-sm" onClick={solicitarEliminacion}>Solicitar eliminación de mis datos</button>
-                  </div>
+                  <Collapsible title="Acceso, corrección y eliminación (Ley 1581 de 2012)" defaultOpen>
+                    <p style={{ fontSize: 13, marginBottom: 14 }}>Tus datos son tuyos. Puedes descargarlos completos (incluido quién los ha consultado), corregirlos en cada sección o pedir que los eliminemos.</p>
+                    <div className="rights">
+                      <a className="btn btn-ghost btn-sm" href="/api/export">Descargar mis datos (JSON)</a>
+                      <button type="button" className="btn btn-danger btn-sm" onClick={solicitarEliminacion}>Solicitar eliminación de mis datos</button>
+                    </div>
+                  </Collapsible>
                 </>
               )}
             </section>
